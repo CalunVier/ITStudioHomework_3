@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Item</title>
+</head>
+<body>
+<div style="text-align: right">
+    {login_status}
+</div>
+<div style="float: left">
+    图片
+</div>
+<div>
+    <h1>{{ item_model.item_name }}</h1>
+    <h1 style="color: red">
+        {{ item_model.price }}
+    </h1>
+    {{ item_introduction|safe }}
+</div>
+</body>
+</html>

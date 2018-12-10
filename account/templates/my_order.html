@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>我的订单</title>
+</head>
+<body>
+<h1>我的订单：</h1>
+{% for order in order_list %}
+    订单ID：{{ order.id }}
+    卖家：{{ order.seller.user.username }}
+    买家：{{ order.buyer.user.username}}
+    金额：￥{{ order.total_amount }}
+    订单状态：{{ order.status }}
+    <a href="{% url "shop:Order" order.id %}">详细</a><br/>
+    <hr/>
+{% endfor %}
+
+</body>
+</html>

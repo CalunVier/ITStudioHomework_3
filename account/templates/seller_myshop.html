@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>我的店铺</title>
+</head>
+<body>
+    <a href="{% url "shop:CreateMall" %}">新建店铺</a><br/>
+    我的店铺：<br/>
+    {% for shop in shop_list %}
+        <a href="{% url "shop:VisitMall" shop.shop.id %}"> {{ shop.shop.shop_name }} </a>
+        <a href="{% url "shop:DeleteMall" shop.shop.id %}">删除</a><br/>
+        <hr/>
+    {% endfor %}
+
+</body>
+</html>

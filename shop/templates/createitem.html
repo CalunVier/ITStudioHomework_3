@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>创建商品</title>
+</head>
+<body>
+<form action="" method="post">
+    {% csrf_token %}
+    {{ form }} <br/>
+    <textarea id="introduction" name="introduction" hidden></textarea>
+    <div id="editor"></div>
+    <input type="submit" value="提交" />
+</form>
+
+
+
+{% load static %}
+<script type="text/javascript" src="{% static "wangEdit/wangEditor.min.js" %}"></script>
+<script type="text/javascript" src="{% static "wangEdit/wangEditor.js" %}"></script>
+<script type="text/javascript">
+    var E = window.wangEditor;
+    var editor = new E('#editor');
+    var text1 = document.getElementById('introduction');
+    editor.customConfig.onchange = function (html) {
+        // 监控变化，同步更新到 textarea
+        text1.value = editor.txt.html()
+    };
+    editor.create();
+    editor.txt.html({{ introduction }});
+</script>
+
+
+</body>
+</html>

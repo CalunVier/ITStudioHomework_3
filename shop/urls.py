@@ -13,17 +13,16 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
-from django.conf.urls import url, include
+from django.conf.urls import url
 from . import views
 
 urlpatterns = [
-    url(r'^register/', views.register, name='Register'),
-    url(r'^login/', views.login, name='Login'),
-    url(r'^logout/', views.logout, name='Logout'),
-    url(r'^my_orders', views.my_orders, name='MyOrders'),
-    url(r'^buyer/home/', views.buyer_home, name='BuyerHome'),
-    url(r'^seller/home/', views.seller_home, name='SellerHome'),
-    url(r'^seller/my_items/', views.my_items, name='MyItems'),
-    url(r'^seller/my_mall/', views.my_mall, name='MyMall'),
-
+    url(r'^create_item/', views.create_item, name='CreateItem'),
+    url(r'^item/(\d+)', views.show_item, name='ShowItem'),
+    url(r'^remove_item/(\d+)', views.remove_item, name='RemoveItem'),
+    url(r'^create_mall/', views.create_shop, name='CreateMall'),
+    url(r'^delete_mall/(\d+)', views.remove_shop, name='DeleteMall'),
+    url(r'^mall/(\d+)', views.visit_shop, name='VisitMall'),
+    # url(r'^order/(\d+)', name='Order'),
+    # url(r'^pay_page/(\d+)', name='PayPage')
 ]

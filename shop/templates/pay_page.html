@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>支付</title>
+</head>
+<body>
+{{ message }}
+{% if allowed %}
+    <form action="{% url "shop:PayPage" order.id %}" method="post">
+        {% csrf_token %}
+        您的余额：{{ balance }}<br/>
+        请输入密码：<input type="password" name="password" /><br/>
+        <input type="submit" value="确认支付" />
+    </form>
+{% endif %}
+</body>
+</html>

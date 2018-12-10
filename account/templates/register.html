@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <title>Register</title>
 </head>
-<body>
+<body style="">
+{% load static %}
 <form action="{% url "account:Register" %}" method="post">
     {% csrf_token %}
     {{ form }}
+
+    <img src="{% static '/satatic/valid_code/' %}" />
+    <input type="text" name="valid_str" />
     <input type="submit" value="提交" />
 </form><br/>
 {{ message }}
