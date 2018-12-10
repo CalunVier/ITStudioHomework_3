@@ -2,6 +2,7 @@ from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 import random
+import os
 
 
 class ValidCodeImg:
@@ -51,7 +52,7 @@ class ValidCodeImg:
         draw = ImageDraw.Draw(image)
 
         # 获取一个font字体对象参数是ttf的字体文件的目录，以及字体的大小
-        font = ImageFont.truetype("kumo.ttf", size=self.font_size)
+        font = ImageFont.truetype("account/templates/consola.ttf", size=self.font_size)
 
         temp = []
         for i in range(self.code_count):
@@ -91,10 +92,20 @@ class ValidCodeImg:
         return data, valid_str
 
 
-if __name__ == '__main__':
+def create_valid_code():
     img = ValidCodeImg()
     data, valid_str = img.getValidCodeImg()
-    print(valid_str)
+    hash_valid_str = hash(valid_str)
+    if not os.path.exists('static/valid_code/'):
+        os.makedirs('static/valid_code/')
+    f = open('static/valid_code/' + str(hash_valid_str)+'.png', 'wb')
+    f.write(data)  # 将验证码写入文件
+    url = 'valid_code/' + str(hash_valid_str)+'.png'
+    return url
 
-    f = open('test.png', 'wb')
-    f.write(data)
+
+def verify_valid_code(valid_str):
+    try:
+        return os.path.exists('static/valid_code/'+str(hash(valid_str))+'.png')
+    except ValueError:
+        return False

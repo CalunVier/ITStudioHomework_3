@@ -6,37 +6,36 @@ from django.contrib.auth import authenticate
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from shop.models import ActiveShop, Order, ActiveItem, OrderShopList
-from .ValidCode import ValidCodeImg
+from .ValidCode import create_valid_code,verify_valid_code
+
 
 # 注册函数
 def register(request):
     if request.method == 'GET':
-        # img = ValidCodeImg()
-        # data, valid_str = img.getValidCodeImg()
-        # valid_str = hash(valid_str)
-        # f = open('/static/valid_code/'+str(valid_str), 'wb')
-        # f.write(data)
-        return render(request, 'register.html', {'form': RegisterForm()})
+        # 构建验证码
+        hashed_valid_code_url = create_valid_code()
+        return render(request, 'register.html', {'form': RegisterForm(), 'valid_code': hashed_valid_code_url})
     if request.method == 'POST':
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            # 注册用户
-            user = User.objects.create_user(form.cleaned_data['username'],     # UserName
-                                            form.cleaned_data['email'],        # Email
-                                            form.cleaned_data['password'],     # Password
-                                            )                                  # Has already been saved
-            # User写入用户信息
-            user.first_name = form.cleaned_data['first_name']       # 写入名字
-            user.last_name = form.cleaned_data['last_name']         # 写入姓氏
-            user.save()                                             # 保存
-            # 写入自定义用户信息
-            # 分不同用户类型写入
-            if form.cleaned_data['user_type']:
-                UserSeller(user=user, user_type=form.cleaned_data['user_type']).save()
-            else:
-                UserBuyer(user=user, user_type=form.cleaned_data['user_type']).save()
+        if verify_valid_code(request.POST.get('valid_str')):
+            form = RegisterForm(request.POST)
+            if form.is_valid():
+                # 注册用户
+                user = User.objects.create_user(form.cleaned_data['username'],     # UserName
+                                                form.cleaned_data['email'],        # Email
+                                                form.cleaned_data['password'],     # Password
+                                                )                                  # Has already been saved
+                # User写入用户信息
+                user.first_name = form.cleaned_data['first_name']       # 写入名字
+                user.last_name = form.cleaned_data['last_name']         # 写入姓氏
+                user.save()                                             # 保存
+                # 写入自定义用户信息
+                # 分不同用户类型写入
+                if form.cleaned_data['user_type']:
+                    UserSeller(user=user, user_type=form.cleaned_data['user_type']).save()
+                else:
+                    UserBuyer(user=user, user_type=form.cleaned_data['user_type']).save()
 
-            return redirect(reverse('account:Login'))
+                return redirect(reverse('account:Login'))
         return render(request, 'register.html', {'form': RegisterForm(form), 'message': '注册失败'})
 
 
@@ -125,6 +124,7 @@ def buyer_cart(request):
         cart_item_list.update()
 
         return render(request, 'buyer_cart.html', {'cart_item_list': cart_item_list})
+
 
 @login_required()
 def my_items(request):
