@@ -67,6 +67,7 @@ def logout(request):
         return redirect(reverse('account:Login'))
 
 
+# 卖家中心
 @login_required()
 def seller_home(request):
     seller = UserSeller.objects.filter(user=request.user)
@@ -101,6 +102,7 @@ def my_mall(request):
         return render(request, 'seller_myshop.html', {'shop_list': shop_list})
 
 
+# 买家中心
 @login_required()
 def buyer_home(request):
     buyer = UserBuyer.objects.filter(user=request.user)
@@ -109,23 +111,11 @@ def buyer_home(request):
         return render(request, 'buyer_home.html', {'buyer_model': buyer})
 
 
-@login_required()
-def buyer_cart(request):
-    buyer = UserBuyer.objects.filter(user=request.user)
-    if buyer:
-        buyer = buyer[0]
-        cart_item_list = Cart.objects.filter(buyer=buyer)
-        # for 检查购物车中的Item是否为active，同时尝试替换为最新版本
-        for cart_item in cart_item_list:
-            if not cart_item.item.active:
-                active_item_queryset = ActiveItem.objects.filter(id=cart_item.item.id)
-                if active_item_queryset:
-                    cart_item.item = active_item_queryset[0].item
-        cart_item_list.update()
-
-        return render(request, 'buyer_cart.html', {'cart_item_list': cart_item_list})
+# 买家购物车
 
 
+
+# 我的商品页面
 @login_required()
 def my_items(request):
     seller = UserSeller.objects.filter(user=request.user)
@@ -135,6 +125,29 @@ def my_items(request):
         return render(request, 'my_items.html', {'item_list': item_list})
 
 
-# def get_login_status(request):
+# 状态栏渲染 返回状态栏的HTML
+def get_login_status(request):
+    if request.user.is_authenticated:
+        status_bar = r"欢迎，" + request.user.username + '！' \
+            " <a href=\"/\">主页</a>" \
+            " <a href=\"/account/{0}\">个人中心</a>"
+        user = UserSeller.objects.filter(user=request.user)
+        if user:
+            status_bar.format('seller/home')
+        else:
+            status_bar.format('buyer/home')
+            status_bar += "<a href=\"/shop/cart\">购物车</a>"
+        status_bar += "<a href=\"/account/logout\">退出登陆</a>"
+    else:
+        status_bar = "欢迎！ <a href=\"/\">主页</a> <a href=\"/account/register\">注册</a> <a href=\"/account/login\">登陆</a>"
+    return status_bar
 
 
+# 获取用户类型    参数为User类型
+def get_user_type(user):
+    seller = UserSeller.objects.filter(user=user)
+    if seller:
+        seller = seller[0]
+        return seller, 1
+    else:
+        return UserBuyer.objects.get(user=user), 0

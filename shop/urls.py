@@ -23,6 +23,7 @@ urlpatterns = [
     url(r'^create_mall/', views.create_shop, name='CreateMall'),
     url(r'^delete_mall/(\d+)', views.remove_shop, name='DeleteMall'),
     url(r'^mall/(\d+)', views.visit_shop, name='VisitMall'),
+    url(r'^cart/', views.cart, name='Cart')
     # url(r'^order/(\d+)', name='Order'),
     # url(r'^pay_page/(\d+)', name='PayPage')
 ]

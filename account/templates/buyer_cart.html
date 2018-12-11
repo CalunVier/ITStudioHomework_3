@@ -6,10 +6,11 @@
 </head>
 <body>
 <h1>{{ user.username }}的购物车</h1>
+{#循环打印购物车内物品#}
 {% for cart_item in cart_item_list %}
-    {% if not cart_item.collected %}
+    {% if not cart_item.collected %}    {# 判断是否收藏列表 #}
         <a href="{% url "shop:ShowItem" cart_item.id %}">{{ cart_item.item.item_name }}</a>
-        价格：{{ cart_item.item.price }}
+        价格：{{ cart_item.item.price }} 数量：{{ cart_item.amount }}
         <a href="">移入收藏</a>
         <a href="">删除</a><br/>
         <hr/>

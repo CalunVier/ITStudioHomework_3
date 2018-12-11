@@ -17,21 +17,25 @@ class ActiveShop(models.Model):   # 活动的店铺
 
 
 class Item(models.Model):
-    item_name = models.CharField(max_length=60, verbose_name='商品名')
-    version = models.IntegerField(default=0, verbose_name='版本号')
-    owner = models.ForeignKey(UserSeller, on_delete=models.CASCADE, verbose_name='所有者')
-    shop = models.ForeignKey(Shop, default=None, null=True, on_delete=models.CASCADE, verbose_name='所属店铺')
-    price = models.DecimalField(default=0, verbose_name='商品价格', decimal_places=6, max_digits=20)
-    inventory = models.IntegerField(default=0, verbose_name='库存')
-    sales_volume = models.IntegerField(default=0, verbose_name='销售量')
-    active = models.BooleanField(default=True, verbose_name='活动的')
+    item_id = models.AutoField(verbose_name=u'商品ID', db_index=True)
+    item_name = models.CharField(max_length=60, verbose_name=u'商品名')
+    version = models.IntegerField(default=0, verbose_name=u'版本号')
+    owner = models.ForeignKey(UserSeller, on_delete=models.CASCADE, verbose_name=u'所有者')
+    shop = models.ForeignKey(Shop, default=None, null=True, on_delete=models.CASCADE, verbose_name=u'所属店铺')
+    price = models.DecimalField(default=0, verbose_name=u'商品价格', decimal_places=6, max_digits=20)
+    inventory = models.IntegerField(default=0, verbose_name=u'库存')
+    sales_volume = models.IntegerField(default=0, verbose_name=u'销售量')
+    active = models.BooleanField(default=True, verbose_name=u'活动的')
     # introductions = models.URLField(default='', verbose_name='介绍地址')
-    create_time = models.DateTimeField(auto_now=True, verbose_name='创建时间')
-    last_edit = models.DateTimeField(auto_now_add=True, verbose_name='最后修改时间')
+    create_time = models.DateTimeField(auto_now=True, verbose_name=u'创建时间')
+    last_edit = models.DateTimeField(auto_now_add=True, verbose_name=u'最后修改时间')
+
+    class Meta:
+        unique_together = ['item_id', 'version']
 
 
 class ActiveItem(models.Model):   # 活动的商品
-    item = models.OneToOneField(Item, on_delete=models.CASCADE, verbose_name='商品')
+    item = models.OneToOneField(Item, on_delete=models.CASCADE, verbose_name=u'商品')
 
 
 class PictureItem(models.Model):
@@ -53,6 +57,14 @@ class Order(models.Model):
     #  'price': cart_item.item.price,
     #  'version': cart_item.item.version}
 
+
 class OrderShopList(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name='订单')
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, verbose_name='商店')
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(UserBuyer, on_delete=models.CASCADE, verbose_name='用户')
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name='商品')
+    amount = models.IntegerField(verbose_name='数量')
+    collected = models.BooleanField(default=False, verbose_name='添加到收藏')

@@ -44,8 +44,8 @@ class UserBuyer(models.Model):
         return False
 
 
-class Cart(models.Model):
-    buyer = models.ForeignKey(UserBuyer, on_delete=models.CASCADE, verbose_name='用户')
-    item = models.ForeignKey('shop.Item', on_delete=models.CASCADE, verbose_name='商品')
-    collected = models.BooleanField(default=False, verbose_name='添加到收藏')
+# class Cart(models.Model):
+#     buyer = models.ForeignKey(UserBuyer, on_delete=models.CASCADE, verbose_name='用户')
+#     item = models.ForeignKey('shop.Item', on_delete=models.CASCADE, verbose_name='商品')
+#     collected = models.BooleanField(default=False, verbose_name='添加到收藏')
 
