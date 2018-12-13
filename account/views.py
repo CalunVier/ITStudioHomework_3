@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, reverse
 from .forms import RegisterForm, LoginForm
-from .models import UserSeller, UserBuyer, Cart
+from .models import UserSeller, UserBuyer
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.contrib import auth
@@ -109,10 +109,6 @@ def buyer_home(request):
     if buyer:
         buyer = buyer[0]
         return render(request, 'buyer_home.html', {'buyer_model': buyer})
-
-
-# 买家购物车
-
 
 
 # 我的商品页面

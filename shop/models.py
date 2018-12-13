@@ -17,7 +17,7 @@ class ActiveShop(models.Model):   # 活动的店铺
 
 
 class Item(models.Model):
-    item_id = models.AutoField(verbose_name=u'商品ID', db_index=True)
+    item_id = models.IntegerField(verbose_name=u'商品ID', db_index=True)
     item_name = models.CharField(max_length=60, verbose_name=u'商品名')
     version = models.IntegerField(default=0, verbose_name=u'版本号')
     owner = models.ForeignKey(UserSeller, on_delete=models.CASCADE, verbose_name=u'所有者')

@@ -1,9 +1,9 @@
 from django.shortcuts import render, reverse, redirect
 from .forms import CreateItemForm, CreateShopForm
-from .models import ActiveItem, Item, Shop, ActiveShop, Order, OrderShopList
+from .models import ActiveItem, Item, Shop, ActiveShop, Order, OrderShopList, Cart
 from django.contrib.auth.decorators import login_required
 from account.models import UserSeller, UserBuyer
-from account.views import get_user_type
+from account.views import get_user_type, get_login_status
 from django.contrib.auth import authenticate
 import os
 import json
@@ -42,6 +42,7 @@ def create_item(request):
                             inventory=form.cleaned_data['inventory'],
                             active=True
                             )    # 将商品基本信息存入数据库
+                item.item_id = item.id
                 item.save()
                 ActiveItem(id=item.item_id, item=item).save()    # 将商品写入Active列表
 
@@ -55,7 +56,7 @@ def create_item(request):
                 with open('static/items/'+str(item.id)+'/'+str(item.version)+'/introduction.intro', 'w') as item_introduction_file:
                     item_introduction_file.write(intro)
                 return redirect(reverse('shop:ShowItem', args={item.id}))   # 创建成功，重定向到商品页面
-            return render(request, 'createitem.html', {'form': CreateItemForm(form)})   #注册失败，重新返回本页面
+            return render(request, 'createitem.html', {'form': CreateItemForm(form)})   # 注册失败，重新返回本页面
 
 
 # 删除商品view
@@ -93,24 +94,68 @@ def create_shop(request):
             form = CreateShopForm(request.POST)
             if form.is_valid():
                 shop = Shop(shop_name=form.cleaned_data['shop_name'], owner=seller)
-                ActiveShop(id=shop.id, shop=shop)
+                shop.save()
+                ActiveShop(id=shop.id, shop=shop).save()
                 return redirect(reverse('shop:VisitMall', {shop.id}))
 
 
 # 修改店铺信息
-def edit_shop(request):
-    if request.method == 'GET':
-        pass
-    if request.method == 'POST':
-        pass
+@login_required()
+def edit_shop(request, shop_id):
+    seller, user_type = get_user_type(request.user)
+    if user_type == 'seller':
+        if request.method == 'GET':
+            active_shop = ActiveShop.objects.filter(id=shop_id)     # 在活动shop中检索shop
+            if active_shop:     # 若存在
+                if active_shop[0].shop.owner == seller:     # 检查该商店是否属于操作者
+                    return render(request, 'createshop.html', {'create_shop_form': CreateShopForm(active_shop[0])})
+                else:
+                    return render(request, 'message.html', {'message_title': '这不是你的店铺', 'message': '这不是你的店铺'})
+            else:
+                return render(request, 'message.html', {'message_title': '没有找到店铺', 'message': '没有找到对应的店铺'})
+
+        if request.method == 'POST':
+            active_shop = ActiveShop.objects.filter(id=shop_id)     # 在活动shop中检索shop
+            if active_shop:     # 若存在
+                if active_shop[0].shop.owner == seller:     # 检查该商店是否属于操作者
+                    form = CreateShopForm(request.POST)
+                    # 下面这一段注释不明觉厉，我没有给shop添加版本号为什么要这样写
+                    # new_shop = Shop(shop_id=active_shop[0].shop.shop_id,
+                    #                 shop_name=form.cleaned_data['shop_name'],
+                    #                 owner=active_shop[0].shop.owner,
+                    #                 sales_amount=active_shop[0].shop.sales_amount,
+                    #                 sales_volume=active_shop[0].shop.sales_volume,
+                    #                 create_time=active_shop[0].shop.create_time)
+                    # new_shop.save()
+                    # active_shop[0].shop = new_shop
+                    # active_shop.update()
+                    active_shop[0].shop.shop_name = form.cleaned_data['shop_name']      # 修改商店名
+                    active_shop.update()    # 更新数据库
+                    return redirect(reverse('shop:VisitMall', {shop_id}))
+                else:
+                    return render(request, 'message.html', {'message_title': '这不是你的店铺', 'message': '这不是你的店铺'})
+            else:
+                return render(request, 'message.html', {'message_title': '没有找到店铺', 'message': '没有找到对应的店铺'})
+    else:
+        return render(request, 'message.html', {'message_title': '你不是卖家', 'message': '你不是卖家'})
 
 
 # 删除店铺
-def remove_shop(request):
-    if request.method == 'GET':
-        pass
-    if request.method == 'POST':
-        pass
+def remove_shop(request, shop_id):
+    seller, user_type = get_user_type(request.user)
+    if user_type == 'seller':   # 检查用户是否为卖家
+        if request.method == 'GET':
+            active_shop = ActiveShop.objects.filter(id=shop_id)  # 在活动shop中检索shop
+            if active_shop:  # 若存在
+                if active_shop[0].shop.owner == seller:  # 检查该商店是否属于操作者
+                    active_shop.delete()
+                    return redirect(reverse('Index'))
+                else:   # 若不属于
+                    return render(request, 'message.html', {'message_title': '这不是你的店铺', 'message': '这不是你的店铺'})
+            else:   # 若存在
+                return render(request, 'message.html', {'message_title': '没有找到店铺', 'message': '没有找到对应的店铺'})
+    else:
+        return render(request, 'message.html', {'message_title': '你不是卖家', 'message': '你不是卖家'})
 
 
 # 浏览店铺
@@ -126,9 +171,8 @@ def visit_shop(request, shop_id):
 
 
 # 获取富文本编辑器？？？？
-def get_editor(request):
-    return render('wangEdit\wangEditor.js')
-
+# def get_editor(request):
+#     return render('wangEdit\wangEditor.js')
 
 # 创建订单
 @login_required()
@@ -182,7 +226,7 @@ def buyer_pay(request, order_id):
                     return redirect(reverse('account:MyOrders'))
             else:
                 return render(request, 'pay_page.html', {'allowed': False, 'message': "这不是你的订单"})
-        return render(request, 'pay_page.html', {'allowed':False, 'message': "订单不存在"})
+        return render(request, 'pay_page.html', {'allowed': False, 'message': "订单不存在"})
 
 
 # 购物车（买家）
