@@ -5,7 +5,7 @@
     <title>SellerHome</title>
 </head>
 <body>
-<h1>欢迎，{{ seller_model.user.username }}</h1>
+<h1>欢迎，卖家 {{ user.username }}</h1>
 <a href="{% url 'account:MyMall' %}">我的店铺</a>
 <a href="{% url 'account:MyItems' %}">我的商品</a>
 <a href="">我的订单</a>

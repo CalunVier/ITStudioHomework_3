@@ -3,7 +3,7 @@ from .forms import CreateItemForm, CreateShopForm
 from .models import ActiveItem, Item, Shop, ActiveShop, Order, OrderShopList, Cart
 from django.contrib.auth.decorators import login_required
 from account.models import UserSeller, UserBuyer
-from account.views import get_user_type, get_login_status
+from account.views import get_user_type, get_status_bar
 from django.contrib.auth import authenticate
 import os
 import json
@@ -12,7 +12,7 @@ import decimal
 
 # 主页
 def index(request):
-    return render(request, 'index.html')
+    return render(request, 'index.html', {'status': get_status_bar(request)})
 
 
 # 商品页面
@@ -23,7 +23,8 @@ def show_item(request, item_id):
             item = item[0]
             with open('static/items/'+str(item.item.id)+'/'+str(item.item.version)+'/introduction.intro', 'r') as item_intro_file:
                 introduction = item_intro_file.read()
-            return render(request, 'item.html', {'item_model': item.item, 'item_introduction': introduction})
+            return render(request, 'item.html',
+                          {'item_model': item.item, 'item_introduction': introduction, 'status_bar': get_status_bar(request)})
 
 
 # 创建商品
@@ -86,17 +87,17 @@ def edit_item(request):
 # 创建店铺
 @login_required()
 def create_shop(request):
-    seller = UserSeller.objects.filter(request.user)
+    seller = UserSeller.objects.filter(user=request.user)
     if seller:
         if request.method == 'GET':
-            return render(request, 'createshop.html', {'create_shop_form': CreateShopForm()})
+            return render(request, 'createshop.html', {'create_shop_form': CreateShopForm(), 'status_bar': get_status_bar(request)})
         if request.method == 'POST':
             form = CreateShopForm(request.POST)
             if form.is_valid():
-                shop = Shop(shop_name=form.cleaned_data['shop_name'], owner=seller)
+                shop = Shop(shop_name=form.cleaned_data['shop_name'], owner=seller[0])
                 shop.save()
                 ActiveShop(id=shop.id, shop=shop).save()
-                return redirect(reverse('shop:VisitMall', {shop.id}))
+                return redirect(reverse('shop:VisitMall', args=[shop.id]))
 
 
 # 修改店铺信息

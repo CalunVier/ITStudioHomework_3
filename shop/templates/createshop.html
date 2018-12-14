@@ -6,10 +6,7 @@
 </head>
 <body>
 <div>
-    欢迎 + request.user.username
-    <a href="">主页</a>
-    <a href="">个人中心</a>
-    <a href="">退出登陆</a>
+    {{ status_bar|safe }}
 </div>
 <form action="{% url "shop:CreateMall" %}" method="post">
     {% csrf_token %}

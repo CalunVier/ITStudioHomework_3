@@ -122,18 +122,18 @@ def my_items(request):
 
 
 # 状态栏渲染 返回状态栏的HTML
-def get_login_status(request):
+def get_status_bar(request):
     if request.user.is_authenticated:
         status_bar = r"欢迎，" + request.user.username + '！' \
             " <a href=\"/\">主页</a>" \
             " <a href=\"/account/{0}\">个人中心</a>"
         user = UserSeller.objects.filter(user=request.user)
         if user:
-            status_bar.format('seller/home')
+            status_bar = status_bar.format('seller/home')
         else:
-            status_bar.format('buyer/home')
-            status_bar += "<a href=\"/shop/cart\">购物车</a>"
-        status_bar += "<a href=\"/account/logout\">退出登陆</a>"
+            status_bar = status_bar.format('buyer/home')
+            status_bar += " <a href=\"/shop/cart\">购物车</a>"
+        status_bar += " <a href=\"/account/logout\">退出</a>"
     else:
         status_bar = "欢迎！ <a href=\"/\">主页</a> <a href=\"/account/register\">注册</a> <a href=\"/account/login\">登陆</a>"
     return status_bar
