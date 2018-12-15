@@ -9,7 +9,7 @@
 <form action="{% url "account:Register" %}" method="post">
     {% csrf_token %}
     {{ form }}
-    <img src="{% static valid_code %}" />
+    <img src="{% url 'shop:GetValidCodeImg' valid_code %}" />
     <input type="text" name="valid_str" />
     <input type="submit" value="提交" />
 </form><br/>

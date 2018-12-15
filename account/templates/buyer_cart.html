@@ -5,27 +5,36 @@
     <title>购物车</title>
 </head>
 <body>
+{{ status_bar|safe }}
 <h1>{{ user.username }}的购物车</h1>
 {#循环打印购物车内物品#}
 {% for cart_item in cart_item_list %}
-    {% if not cart_item.collected %}    {# 判断是否收藏列表 #}
-        <a href="{% url "shop:ShowItem" cart_item.id %}">{{ cart_item.item.item_name }}</a>
-        价格：{{ cart_item.item.price }} 数量：{{ cart_item.amount }}
-        <a href="">移入收藏</a>
-        <a href="">删除</a><br/>
-        <hr/>
+    {% if not cart_item.collected %}    {# 判断是否加入了收藏列表 #}
+        <a href="{% url "shop:ShowItem" cart_item.item.item_id %}">{{ cart_item.item.item_name }}</a>
+        价格：{{ cart_item.item.price }} 数量：{{ cart_item.quantity }}
+        {% if not cart_item.item.inventory %}
+            [无货]
+        {% endif %}
+        {% if not cart_item.item.active %}
+            [失效]
+        {% endif %}
+        <a href="{% url 'shop:AddItemToCollection' cart_item.item.item_id %}">移入收藏</a>
+        <a href="{% url 'shop:DeleteItemFormCart' cart_item.item.item_id %}">删除</a><br/>
+        <hr/><br/>
     {% endif %}
 {% endfor %}
-<form action="" method="get">
+<form action="{% url 'shop:MakeOrder' %}" method="post">
+    {% csrf_token %}
     <input type="submit" value="立即下单" />
 </form>
+======================================================================
 <h2>收藏列表</h2>
 {% for cart_item in cart_item_list %}
     {% if cart_item.collected %}
-        <a href="{% url "shop:ShowItem" cart_item.id %}">{{ cart_item.item.item_name }}</a>
+        <a href="{% url "shop:ShowItem" cart_item.item.item_id %}">{{ cart_item.item.item_name }}</a>
         价格：{{ cart_item.item.price }}
-        <a href="">加入购物车</a>
-        <a href="">删除</a><br/>
+        <a href="{% url 'shop:FormCollectionAddToCart' cart_item.item.item_id %}">加入购物车</a>
+        <a href="{% url 'shop:DeleteItemFormCart' cart_item.item.item_id %}">删除</a><br/>
         <hr/>
     {% endif %}
 {% endfor %}

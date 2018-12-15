@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>订单详情</title>
+</head>
+<body>
+订单ID:{{ order.id }} <br/>
+商品列表：<br/>
+<hr/><br/>
+{% for item in item_list %}
+    商品名：{{ item.item_name }}
+    价格：{{ item.price }}
+    购买数量 {{ item.quantity }}
+    <a href="{% url 'shop:HistoryItem' item.item_id item.version %}">详情</a>
+    <hr/><br/>
+{% endfor %}
+总金额：{{ order.total_amount }}
+创建时间：{{ order.create_time }}
+状态更新时间：{{ order.last_edit }}
+</body>
+</html>

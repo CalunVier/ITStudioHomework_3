@@ -3,6 +3,9 @@ from PIL import ImageDraw
 from PIL import ImageFont
 import random
 import os
+import hashlib
+
+sha1_hash_salt = ''
 
 
 class ValidCodeImg:
@@ -93,19 +96,35 @@ class ValidCodeImg:
 
 
 def create_valid_code():
+    global  sha1_hash_salt
     img = ValidCodeImg()
     data, valid_str = img.getValidCodeImg()
-    hash_valid_str = hash(valid_str)
-    if not os.path.exists('static/valid_code/'):
-        os.makedirs('static/valid_code/')
-    f = open('static/valid_code/' + str(hash_valid_str)+'.png', 'wb')
-    f.write(data)  # 将验证码写入文件
-    url = 'valid_code/' + str(hash_valid_str)+'.png'
-    return url
+    if not sha1_hash_salt:
+        print('空')
+        salt = ''
+        i = 16
+        while i > 0:
+            salt += chr(random.randint(33, 127))
+            i -= 1
+        print('salt:', salt)
+        sha1_hash_salt = salt
+        print(sha1_hash_salt)
+    print(valid_str.lower()+sha1_hash_salt)
+    hash_valid_str = hashlib.sha1((valid_str.lower()+sha1_hash_salt).encode('utf-8')).hexdigest()
+    # 不再将验证码写入文件
+    # if not os.path.exists('static/valid_code/'):
+    #     os.makedirs('static/valid_code/')
+    # f = open('static/valid_code/' + str(hash_valid_str)+'.png', 'wb')
+    # f.write(data)  # 将验证码写入文件
+    # url = 'valid_code/' + str(hash_valid_str)+'.png'
+    return hash_valid_str, data
 
 
-def verify_valid_code(valid_str):
-    try:
-        return os.path.exists('static/valid_code/'+str(hash(valid_str))+'.png')
-    except ValueError:
+def verify_valid_code(valid_str, hash_valid_str):
+    print(valid_str.lower()+sha1_hash_salt)
+    print(hashlib.sha1((valid_str.lower() + sha1_hash_salt).encode('utf-8')).hexdigest())
+    print(hash_valid_str)
+    if hashlib.sha1((valid_str.lower() + sha1_hash_salt).encode('utf-8')).hexdigest() == hash_valid_str:
+        return True
+    else:
         return False

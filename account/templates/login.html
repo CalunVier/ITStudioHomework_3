@@ -5,6 +5,7 @@
     <title>Login</title>
 </head>
 <body>
+{{ status_bar|safe }}
 <form action="{% url "account:Login" %}" method="post">
     {% csrf_token %}
     {{ form }}

@@ -5,8 +5,10 @@
     <title>我的主页</title>
 </head>
 <body>
-<h1>欢迎，{{ buyer_model.user.username }}</h1>
-<a href="">我的订单</a>
-<a href="">购物车</a>
+<h1>欢迎，卖家 {{ buyer_model.user.username }}</h1>
+我的余额：{{ buyer_model.balance }}<br/>
+<a href="{% url 'shop:Cart' %}">购物车</a>
+<a href="{% url 'account:MyOrders' %}">我的订单</a>
+
 </body>
 </html>

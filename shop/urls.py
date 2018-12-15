@@ -23,7 +23,13 @@ urlpatterns = [
     url(r'^create_mall/', views.create_shop, name='CreateMall'),
     url(r'^delete_mall/(\d+)', views.remove_shop, name='DeleteMall'),
     url(r'^mall/(\d+)', views.visit_shop, name='VisitMall'),
-    url(r'^cart/', views.cart, name='Cart')
-    # url(r'^order/(\d+)', name='Order'),
-    # url(r'^pay_page/(\d+)', name='PayPage')
+    url(r'^cart/', views.cart, name='Cart'),
+    url(r'^get_valid_code_img/(.+)', views.get_valid_code_img, name='GetValidCodeImg'),
+    url(r'^delete_item_from_cart/(\d+)', views.delete_item_form_cart, name='DeleteItemFormCart'),
+    url(r'^add_item_to_collection/(\d+)', views.add_item_to_collection, name='AddItemToCollection'),
+    url(r'^form_collection_add_to_cart/(\d+)', views.form_collection_add_to_cart, name='FormCollectionAddToCart'),
+    url(r'^order/(\d+)', views.order_details, name='Order'),
+    url(r'^pay_page/(\d+)', views.buyer_pay, name='PayPage'),
+    url(r'^history/item/(\d+)/(\d+)', views.history_item, name='HistoryItem'),
+    url(r'^buyer/make_order/', views.make_order, name='MakeOrder')
 ]

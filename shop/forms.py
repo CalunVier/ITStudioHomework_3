@@ -3,6 +3,7 @@ from .models import Item, Shop
 
 
 class CreateItemForm(forms.ModelForm):
+
     class Meta:
         model = Item
         fields = ['item_name', 'price', 'inventory']

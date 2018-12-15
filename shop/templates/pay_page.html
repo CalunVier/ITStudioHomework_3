@@ -6,13 +6,13 @@
 </head>
 <body>
 {{ message }}
-{% if allowed %}
-    <form action="{% url "shop:PayPage" order.id %}" method="post">
-        {% csrf_token %}
-        您的余额：{{ balance }}<br/>
-        请输入密码：<input type="password" name="password" /><br/>
-        <input type="submit" value="确认支付" />
-    </form>
-{% endif %}
+您正在支付订单:{{ order.id }}<br/>
+本次操作将支付:{{ order.total_amount }}元<br/>
+您的余额：{{ balance }}<br/>
+<form action="{% url "shop:PayPage" order.id %}" method="post">
+    {% csrf_token %}
+    请输入登陆密码：<input type="password" name="password" /><br/>
+    <input type="submit" value="确认支付" />
+</form>
 </body>
 </html>

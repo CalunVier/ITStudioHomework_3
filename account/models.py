@@ -8,8 +8,8 @@ import abc
 class UserSeller(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='User', primary_key=True)
     user_type = models.IntegerField(choices=((0, '买家'), (1, '卖家')))
-    sales_amount = models.DecimalField(default=0, verbose_name='销售额', decimal_places=6, max_digits=20)
-    balance = models.DecimalField(default=0, verbose_name='余额', decimal_places=6, max_digits=20)
+    sales_amount = models.DecimalField(default=0, verbose_name='销售额', decimal_places=2, max_digits=20)
+    balance = models.DecimalField(default=0, verbose_name='余额', decimal_places=2, max_digits=20)
 
     def balance_add(self, delta):  # balance的增减函数，防止出现负值。结束时返回Bool值表示状态，True增减成功，False增减失败
         if isinstance(delta, str):  # 如果传入str
@@ -28,7 +28,7 @@ class UserSeller(models.Model):
 class UserBuyer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='User', primary_key=True)
     user_type = models.IntegerField(choices=((0, '买家'), (1, '卖家')))
-    balance = models.DecimalField(verbose_name='余额', decimal_places=6, max_digits=20)
+    balance = models.DecimalField(default=0, verbose_name='余额', decimal_places=2, max_digits=20)
 
     def balance_add(self, delta):  # balance的增减函数，防止出现负值。结束时返回Bool值表示状态，True增减成功，False增减失败
         if isinstance(delta, str):  # 如果传入str

@@ -9,6 +9,12 @@
 <form action="" method="post">
     {% csrf_token %}
     {{ form }} <br/>
+    上架店铺:
+    <select name="shop">
+        {% for shop in choices %}
+            <option value="{{ shop.0 }}">{{ shop.1 }}</option>
+        {% endfor %}
+    </select>
     <textarea id="introduction" name="introduction" hidden></textarea>
     <div id="editor"></div>
     <input type="submit" value="提交" />

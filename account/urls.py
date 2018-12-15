@@ -20,10 +20,10 @@ urlpatterns = [
     url(r'^register/', views.register, name='Register'),
     url(r'^login/', views.login, name='Login'),
     url(r'^logout/', views.logout, name='Logout'),
+    url(r'^changepw/', views.change_password, name='ChangePassword'),
     url(r'^my_orders', views.my_orders, name='MyOrders'),
     url(r'^buyer/home/', views.buyer_home, name='BuyerHome'),
     url(r'^seller/home/', views.seller_home, name='SellerHome'),
     url(r'^seller/my_items/', views.my_items, name='MyItems'),
     url(r'^seller/my_mall/', views.my_mall, name='MyMall'),
-
 ]

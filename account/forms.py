@@ -31,12 +31,13 @@ class RegisterForm(forms.Form):
 
     def clean_password(self):
         row_password = self.cleaned_data['password']
+        self.my_row_password = self.cleaned_data['password']
         if re.search(r'[^A-Za-z0-9_:.`~]', row_password):
             raise forms.ValidationError("密码只能包含字母、数字和_:.`~")
         return row_password
 
     def clean_confirm_password(self):
-        password = self.cleaned_data['password']
+        password = self.my_row_password
         row_confirm_password = self.cleaned_data['confirm_password']
         if password != row_confirm_password:
             raise forms.ValidationError("两次输入的密码不一致")
@@ -46,3 +47,28 @@ class RegisterForm(forms.Form):
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=16, min_length=3, label='用户名')
     password = forms.CharField(max_length=16, min_length=3, label='密码', widget=forms.PasswordInput)
+
+
+class ChangePasswordForm(forms.Form):
+    old_password = forms.CharField(max_length=16, min_length=3, label='旧密码', widget=forms.PasswordInput)
+    new_password = forms.CharField(max_length=16, min_length=3, label='新密码', widget=forms.PasswordInput)
+    confirm_new_password = forms.CharField(max_length=16, min_length=3, label='确认新密码', widget=forms.PasswordInput)
+
+    def clean_old_password(self):
+        row_password = self.cleaned_data['old_password']
+        if re.search(r'[^A-Za-z0-9_:.`~]', row_password):
+            raise forms.ValidationError("密码只能包含字母、数字和_:.`~")
+        return row_password
+
+    def clean_new_password(self):
+        row_password = self.cleaned_data['new_password']
+        if re.search(r'[^A-Za-z0-9_:.`~]', row_password):
+            raise forms.ValidationError("密码只能包含字母、数字和_:.`~")
+        return row_password
+
+    def clean_confirm_new_password(self):
+        password = self.new_password
+        row_confirm_password = self.cleaned_data['confirm_new_password']
+        if password != row_confirm_password:
+            raise forms.ValidationError("两次输入的密码不一致")
+        return row_confirm_password

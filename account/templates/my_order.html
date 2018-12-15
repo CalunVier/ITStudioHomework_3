@@ -5,16 +5,70 @@
     <title>我的订单</title>
 </head>
 <body>
+{{ status_bar|safe }}
 <h1>我的订单：</h1>
-{% for order in order_list %}
-    订单ID：{{ order.id }}
-    卖家：{{ order.seller.user.username }}
-    买家：{{ order.buyer.user.username}}
-    金额：￥{{ order.total_amount }}
-    订单状态：{{ order.status }}
-    <a href="{% url "shop:Order" order.id %}">详细</a><br/>
-    <hr/>
-{% endfor %}
-
+{% if user_type == 'buyer' %}
+    {% for order in order_list %}
+        订单ID：{{ order.id }}
+        金额：￥{{ order.total_amount }}
+        订单状态：
+        {% if order.status == 0 %}
+            待支付
+            <a href="{% url 'shop:PayPage' order.id %}">立即支付</a>
+            <a href="">取消</a>
+        {% elif order.status == 1 %}
+            待发货
+            <a href="">申请退款</a>
+        {% elif order.status == 2 %}
+            已发货
+            <a href="">申请退款</a>
+        {% elif order.status == 3 %}
+            订单完成
+            <a href="">申请退款</a>
+        {% elif order.status == 4 %}
+            申请退货
+            <a href="">取消</a>
+        {% elif order.status == 5 %}
+            已关闭
+        {% elif order.status == 6 %}
+            退货中
+            <a href="">取消</a>
+        {% endif %}
+        <a href="{% url "shop:Order" order.id %}">详细</a><br/>
+        <hr/><br/>
+    {% endfor %}
+{% elif user_type == 'seller' %}
+    {% for order in order_list %}
+        订单ID:{{ order.order.id }}
+        金额：￥{{ order.order.total_amount }}
+        订单状态：
+        {% if order.status == 0 %}
+            待支付
+        {% elif order.status == 1 %}
+            待发货
+            <a href="">发货</a>
+        {% elif order.status == 2 %}
+            已发货
+        {% elif order.status == 3 %}
+            订单完成
+        {% elif order.status == 4 %}
+            申请退货
+            <a href="">同意</a>
+            <a href="">拒绝</a>
+        {% elif order.status == 5 %}
+            已关闭
+        {% elif order.status == 6 %}
+            退货中
+        {% endif %}
+        {% if order.order.status == 1 %}
+            <a href="{% url "shop:Order" order.id %}">发货</a>
+        {% endif %}
+        {% if order.order.status == 4 %}
+            <a href="{% url "shop:Order" order.id %}">同意</a>
+            <a href="{% url "shop:Order" order.id %}">不同意</a>
+        {% endif %}
+        <a href="{% url "shop:Order" order.id %}">详细</a><br/>
+    {% endfor %}
+{% endif %}
 </body>
 </html>
