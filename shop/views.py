@@ -1,7 +1,7 @@
 from django.shortcuts import render, reverse, redirect
 from django.http import HttpResponse
 from .forms import CreateItemForm, CreateShopForm
-from .models import ActiveItem, Item, Shop, ActiveShop, Order, Cart
+from .models import ActiveItem, Item, Shop, ActiveShop, Order, Cart, BuyerAndItem
 from django.contrib.auth.decorators import login_required
 from account.models import UserSeller, UserBuyer
 from account.views import get_user_type, get_status_bar, valid_code_data
@@ -24,6 +24,7 @@ def show_item(request, item_id):
         active_item = active_item[0]
         user, user_type = get_user_type(request.user)
         if request.method == 'GET':
+
             if os.path.exists('static/items/'+str(active_item.item.item_id)+'/'+str(active_item.item.version)+'/introduction.intro'):
                 with open('static/items/'+str(active_item.item.item_id)+'/'+str(active_item.item.version)+'/introduction.intro', 'r') as item_intro_file:
                     introduction = item_intro_file.read()
@@ -49,8 +50,8 @@ def show_item(request, item_id):
                                    'message_title': '购物车添加成功',
                                    'message': '已经成功将商品添加到您的购物车',
                                    'other': '<a href="/shop/item/{0}">返回</a>'.format(str(item_id))})
-                elif request.POST.get('buy_now'):
-                    pass
+                elif request.POST.get('buy_now'):   # 如果选择直接购买
+                    return redirect(reverse('shop:MakeOrder', args=[item_id]))
                 else:   # 以其他未知方式提交表单
                     return HttpResponse(status=403)
             elif not user_type:     # 如果未登录，或因其他原因返回none
@@ -118,22 +119,42 @@ def remove_item(request, item_id):
         user, user_type = get_user_type(request.user)
         if user_type == 'seller':
             item = ActiveItem.objects.filter(id=item_id)
-            if item[0].item.owner == user:
-                item[0].item.active = False
-                item[0].item.save()
-                item.delete()
+            if item:
+                if item[0].item.owner == user:
+                    item[0].item.active = False
+                    item[0].item.save()
+                    item.delete()
         else:
             return render(request, 'message.html', {'message_title': '删除失败', 'message': '这不是你的商品'})
 
 
 # 修改商品
 @login_required()
-def edit_item(request):
+def edit_item(request, item_id):
     if request.method == 'GET':
-        pass
+        active_item = ActiveItem.objects.filter(id=item_id)
+        if active_item:
+            item = active_item[0].item
+            if not os.path.exists('static/items/' + str(item.item_id) + '/' + str(item.version) + '/'):
+                os.makedirs('static/items/' + str(item.item_id) + '/' + str(item.version) + '/')
+            with open('static/items/' + str(item.item_id) + '/' + str(item.version) + '/introduction.intro',
+                      'r') as item_introduction_file:
+                introduction = item_introduction_file.read()
+            # form = CreateItemForm()
+            # form.item_name = item.item_name
+            # form.price = item.price
+            # form.inventory = item.inventory
+            return render(request, 'edit_item.html', {'status_bar':get_status_bar(request),
+                                                      'item_name':item.item_name,
+                                                      'price': str(item.price),
+                                                      'inventory': str(item.inventory),
+                                                       'introduction': introduction})
     if request.method == 'POST':
         pass
 
+
+def delete_item(request, item_id):
+    pass
 
 # 创建店铺
 @login_required()
@@ -228,14 +249,22 @@ def visit_shop(request, shop_id):
 
 # 创建订单
 @login_required()
-def make_order(request):
+def make_order(request, item_id):
     buyer = UserBuyer.objects.filter(user=request.user)
+    try:
+        item_id = int(item_id)
+    except BaseException:
+        item_id = 0
     if request.method == 'GET':
         if buyer:
             buyer = buyer[0]
-            # 获取cart中所有的item，除去收集的，没有货的，和不活动的item
-            order_cart_item_list = Cart.objects.filter(user=buyer, collected=False).exclude(item__inventory=0).exclude(
-                item__active=False)
+            if item_id:
+                item = ActiveItem.objects.filter(id=item_id)[0].item
+                order_cart_item_list = [Cart(user=buyer, collected=False, item=item, quantity=1)]
+            else:
+                # 获取cart中所有的item，除去收集的，没有货的，和不活动的item
+                order_cart_item_list = Cart.objects.filter(user=buyer, collected=False).exclude(item__inventory=0).exclude(
+                    item__active=False)
             if order_cart_item_list:
                 orders = {}     # 临时存储订单
                 for cart_item in order_cart_item_list:
@@ -248,7 +277,8 @@ def make_order(request):
                                                                    'price': str(cart_item.item.price),  # 销售时的商品价格
                                                                    'version': cart_item.item.version,
                                                                    'quantity': cart_item.quantity})  # 商品版本
-                return render(request, 'make_order.html', {'status_bar': get_status_bar(request),'orders': orders})
+                return render(request, 'make_order.html', {'status_bar': get_status_bar(request),'orders': orders,
+                                                           'item_id': item_id})
             else:
                 return render(request, 'message.html', {'message_title': '没有商品',
                                                         'message': '您的购物车为空，无法创建订单',
@@ -256,8 +286,12 @@ def make_order(request):
     if request.method == 'POST':
         if buyer:
             buyer = buyer[0]
-            # 获取cart中所有的item，除去收集的，没有货的，和不活动的item
-            order_cart_item_list = Cart.objects.filter(user=buyer, collected=False).exclude(item__inventory=0).exclude(item__active=False)
+            if item_id:
+                item = ActiveItem.objects.filter(id=item_id)[0].item
+                order_cart_item_list = [Cart(user=buyer, collected=False, item=item, quantity=1)]
+            else:
+                # 获取cart中所有的item，除去收集的，没有货的，和不活动的item
+                order_cart_item_list = Cart.objects.filter(user=buyer, collected=False).exclude(item__inventory=0).exclude(item__active=False)
             if order_cart_item_list:    # 如果存在
                 # order_item_list_as_json = []    # 存储json化的订单信息
                 # order_amount = decimal.Decimal(0)
@@ -295,7 +329,10 @@ def make_order(request):
                 # order.save()
                 # for s in shops:
                 #     OrderShopList(order=order, shop=s).save()
-                order_cart_item_list.delete()
+                try:
+                    order_cart_item_list.delete()
+                except AttributeError:
+                    pass
                 if len(orders) == 1:
                     for key in orders.keys():
                         order_id = orders[key].id
@@ -489,8 +526,9 @@ def order_operation(request, order_id, option):
                         order.save()
                         return redirect(reverse('account:MyOrders'))
                     elif order.status == 4 and option == 3:     # 申请退款时取消申请退款
+                        last_status = order.last_status
                         order.status = order.last_status
-                        order.last_status = 4
+                        order.last_status = last_status
                         order.save()
                         return redirect(reverse('account:MyOrders'))
                     elif order.status == 2 and option == 5:     # 发货后确认收货
@@ -500,6 +538,17 @@ def order_operation(request, order_id, option):
                         order.save()
                         order.shop.owner.balance += order.total_amount
                         order.shop.owner.save()
+                        details = json.loads(order.details)
+                        for item in details:
+                            if not BuyerAndItem.objects.filter(item__item_id= item['item_id']):
+                                BuyerAndItem(buyer=order.buyer,
+                                             item=Item.objects.filter(item_id=item['item_id'],
+                                                                      version=item['version'])[0]).save()
+                        return redirect(reverse('account:MyOrders'))
+                    elif order.status == 6 and option == 4:
+                        order.status = order.last_status
+                        order.last_status = 6
+                        order.save()
                         return redirect(reverse('account:MyOrders'))
                 # 如果都不行
                 return HttpResponse(status=403)
@@ -512,26 +561,30 @@ def order_operation(request, order_id, option):
                         return redirect(reverse('account:MyOrders'))
                     elif order.status == 4 and option == 7:
                         if order.last_status == 1:
-                            order.last_status = order.status
                             order.status = 5
                             order.save()
+                            order.buyer.balance += order.total_amount
+                            order.buyer.save()
                             return redirect(reverse('account:MyOrders'))
                         else:
-                            order.last_status = order.status
                             order.status = 6
                             order.save()
                             return redirect(reverse('account:MyOrders'))
                     elif order.status == 4 and option == 8:
-                        order.status == order.last_status
-                        order.last_status == 4
+                        print(order.last_status)
+                        last_status = order.last_status
+                        order.status = order.last_status
+                        order.last_status = last_status
                         order.save()
                         return redirect(reverse('account:MyOrders'))
                     elif order.status == 6 and option == 9:
                         order.last_status = order.status
                         order.status = 5
                         order.save()
+                        order.buyer.balance += order.total_amount
+                        order.buyer.save()
                         if order.finished:
-                            order.shop.owner.balance += order.total_amount
+                            order.shop.owner.balance -= order.total_amount
                             order.shop.owner.save()
                         return redirect(reverse('account:MyOrders'))
                 return HttpResponse(status=403)

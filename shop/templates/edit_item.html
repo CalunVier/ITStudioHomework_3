@@ -2,25 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>创建商品</title>
+    <title>修改商品</title>
 </head>
 <body>
 {{ status_bar|safe }}
 <form action="" method="post">
-    {% csrf_token %}
-    {{ form }} <br/>
+    <label for="id_item_name">商品名称:</label><input name="item_name" id="id_item_name" required="" type="text" maxlength="60" value="{{ item_name }}">
+<label for="id_price">商品价格:</label><input name="price" id="id_price" required="" type="number" step="0.01" value="{{ price }}">
+<label for="id_inventory">库存数量:</label><input name="inventory" id="id_inventory" required="" type="number" value="{{ inventory }}"> <br>
     上架店铺:
     <select name="shop">
-        {% for shop in choices %}
-            <option value="{{ shop.0 }}">{{ shop.1 }}</option>
-        {% endfor %}
+
     </select>
     <textarea id="introduction" name="introduction" hidden></textarea>
     <div id="editor"></div>
     <input type="submit" value="提交" />
 </form>
-
-
 
 {% load static %}
 <script type="text/javascript" src="{% static "wangEdit/wangEditor.min.js" %}"></script>
@@ -36,6 +33,7 @@
     editor.create();
     editor.txt.html({{ introduction }});
 </script>
+
 
 
 </body>

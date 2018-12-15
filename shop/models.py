@@ -72,3 +72,13 @@ class Cart(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name='商品')
     quantity = models.IntegerField(default=1, verbose_name='数量')
     collected = models.BooleanField(default=False, verbose_name='添加到收藏')
+
+
+class Comment(models.Model):
+    buyer = models.ForeignKey(UserBuyer, on_delete=models.CASCADE, verbose_name='用户')
+    content = models.TextField(max_length=10000,verbose_name='评论内容')
+
+
+class BuyerAndItem(models.Model):
+    buyer = models.ForeignKey(UserBuyer, on_delete=models.CASCADE, verbose_name='用户')
+    item = models.ForeignKey(Item, on_delete=models.CASCADE,verbose_name='买过的物品')

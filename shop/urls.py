@@ -31,6 +31,7 @@ urlpatterns = [
     url(r'^order/(\d+)', views.order_details, name='Order'),
     url(r'^pay_page/(\d+)', views.buyer_pay, name='PayPage'),
     url(r'^history/item/(\d+)/(\d+)', views.history_item, name='HistoryItem'),
-    url(r'^buyer/make_order/', views.make_order, name='MakeOrder'),
-    url(r'^order_operation/(\d+)/(\d)', views.order_operation, name='OrderOperation')
+    url(r'^buyer/make_order/(\d+)?', views.make_order, name='MakeOrder'),
+    url(r'^order_operation/(\d+)/(\d)', views.order_operation, name='OrderOperation'),
+    url(r'^edit_item/(\d+)', views.edit_item, name='EditItem'),
 ]

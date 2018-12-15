@@ -5,11 +5,11 @@
     <title>我的商品</title>
 </head>
 <body>
-<a href="{% url 'shop:CreateItem' %}">创建商品</a>
+<a href="{% url 'shop:CreateItem' %}">创建商品</a><br/>
 {% for item in item_list %}
-    <a href="{% url 'shop:ShowItem' item.id %}">{{ item.item.item_name }}</a>
-    <a href="">修改</a>
-    <a href="">删除</a><br/>
+    <a href="{% url 'shop:ShowItem' item.item_id %}">{{ item.item.item_name }}</a>
+    <a href="{% url 'shop:EditItem' item.item_id %}">修改</a>
+    <a href="{% url 'shop:RemoveItem' item.item_id %}">删除</a><br/>
 {% endfor %}
 
 </body>

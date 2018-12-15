@@ -14,7 +14,7 @@
     <hr/><br/>
     {% endfor %}
 {% endfor %}
-<form action="{% url 'shop:MakeOrder' %}" method="post">
+<form action="{% url 'shop:MakeOrder' item_id %}" method="post">
     {% csrf_token %}
     <input type="submit" value="立即下单" />
 </form>
