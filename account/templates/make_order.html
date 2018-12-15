@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>确认订单</title>
+</head>
+<body>
+{% for order in orders.values %}
+    ===========================================<br/>
+    {% for item in order.details %}
+        商品名：{{ item.item_name }}
+        价格：{{ item.price }}
+        购买数量 {{ item.quantity }}
+    <hr/><br/>
+    {% endfor %}
+{% endfor %}
+<form action="{% url 'shop:MakeOrder' %}" method="post">
+    {% csrf_token %}
+    <input type="submit" value="立即下单" />
+</form>
+
+</body>
+</html>

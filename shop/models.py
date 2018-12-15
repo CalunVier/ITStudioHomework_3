@@ -46,7 +46,10 @@ class PictureItem(models.Model):
 class Order(models.Model):
     choices = ((0, '已创建'), (1, '已支付'), (2, '已发货'), (3, '已完成'), (4, '申请退货'), (5, '已关闭'), (6, '退货中'))
     buyer = models.ForeignKey(UserBuyer, on_delete=models.CASCADE, verbose_name='买家')
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, verbose_name='店铺')
     status = models.IntegerField(choices=choices, default=0, verbose_name='订单状态')
+    last_status = models.IntegerField(choices=choices, default=0, verbose_name='前一订单状态')
+    finished = models.BooleanField(default=False, verbose_name='完成过')
     create_time = models.DateTimeField(auto_now=True, verbose_name='创建时间')
     last_edit = models.DateTimeField(auto_now_add=True, verbose_name='最后修改时间')
     total_amount = models.DecimalField(default=0, verbose_name='总金额', decimal_places=2, max_digits=20)
@@ -59,9 +62,9 @@ class Order(models.Model):
     #  'quantity': cart_item.quantity}
 
 
-class OrderShopList(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name='订单')
-    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, verbose_name='商店')
+# class OrderShopList(models.Model):
+#     order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name='订单')
+#     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, verbose_name='商店')
 
 
 class Cart(models.Model):

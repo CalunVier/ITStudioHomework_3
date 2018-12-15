@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from shop.models import ActiveShop, Order, ActiveItem, OrderShopList
+from shop.models import ActiveShop, Order, ActiveItem
 from .ValidCode import create_valid_code,verify_valid_code
 
 valid_code_data = {}
@@ -152,12 +152,12 @@ def my_orders(request):
         seller = UserSeller.objects.filter(user=request.user)
         if seller:
             seller = seller[0]
-            order_list = OrderShopList.objects.filter(shop__owner=seller)
+            order_list = Order.objects.filter(shop__owner=seller)
             user_type = 'seller'
 
     if user_type:
         return render(request, 'my_order.html', {'order_list': order_list, 'user_type': user_type,
-                                                 'status_bar':get_status_bar(request)})
+                                                 'status_bar': get_status_bar(request)})
     else:
         return HttpResponse(status=403)
 
@@ -213,7 +213,7 @@ def get_status_bar(request):
 
 # 获取用户类型    参数为User类型
 def get_user_type(row_user):
-    if row_user:
+    if row_user.is_authenticated:
         buyer = UserBuyer.objects.filter(user=row_user)
         if buyer:
             return buyer[0], 'buyer'

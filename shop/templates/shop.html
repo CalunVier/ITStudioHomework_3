@@ -5,9 +5,10 @@
     <title>Shop</title>
 </head>
 <body>
+{{ status_bar|safe }}
 <h1>{{ shop_model.shop_name }}</h1>
 {% for item in item_list %}
-    <div style="border-width: 1px; float: right">
+    <div>
         <a href="{% url "shop:ShowItem" item.item.id %}">{{ item.item.item_name }}</a><br/>
         价格：{{ item.item.price }} <br/>
     </div>

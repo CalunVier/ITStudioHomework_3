@@ -23,9 +23,9 @@
         <hr/><br/>
     {% endif %}
 {% endfor %}
-<form action="{% url 'shop:MakeOrder' %}" method="post">
+<form action="{% url 'shop:MakeOrder' %}" method="get">
     {% csrf_token %}
-    <input type="submit" value="立即下单" />
+    <input type="submit" value="下单" />
 </form>
 ======================================================================
 <h2>收藏列表</h2>

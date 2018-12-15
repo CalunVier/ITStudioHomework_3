@@ -1,7 +1,7 @@
 from django.shortcuts import render, reverse, redirect
 from django.http import HttpResponse
 from .forms import CreateItemForm, CreateShopForm
-from .models import ActiveItem, Item, Shop, ActiveShop, Order, OrderShopList, Cart
+from .models import ActiveItem, Item, Shop, ActiveShop, Order, Cart
 from django.contrib.auth.decorators import login_required
 from account.models import UserSeller, UserBuyer
 from account.views import get_user_type, get_status_bar, valid_code_data
@@ -24,11 +24,12 @@ def show_item(request, item_id):
         active_item = active_item[0]
         user, user_type = get_user_type(request.user)
         if request.method == 'GET':
-            if os.path.exists('static/items/'+str(active_item.item.id)+'/'+str(active_item.item.version)+'/introduction.intro'):
-                with open('static/items/'+str(active_item.item.id)+'/'+str(active_item.item.version)+'/introduction.intro', 'r') as item_intro_file:
+            if os.path.exists('static/items/'+str(active_item.item.item_id)+'/'+str(active_item.item.version)+'/introduction.intro'):
+                with open('static/items/'+str(active_item.item.item_id)+'/'+str(active_item.item.version)+'/introduction.intro', 'r') as item_intro_file:
                     introduction = item_intro_file.read()
             else:
                 introduction = ''
+            print(user_type)
             return render(request, 'item.html',
                           {'item_model': active_item.item, 'item_introduction': introduction,
                            'status_bar': get_status_bar(request),
@@ -44,7 +45,8 @@ def show_item(request, item_id):
                     else:
                         Cart(user=user, item=active_item.item).save()
                     return render(request, 'message.html',
-                                  {'message_title': '购物车添加成功',
+                                  {'status_bar':get_status_bar(request),
+                                   'message_title': '购物车添加成功',
                                    'message': '已经成功将商品添加到您的购物车',
                                    'other': '<a href="/shop/item/{0}">返回</a>'.format(str(item_id))})
                 elif request.POST.get('buy_now'):
@@ -52,9 +54,9 @@ def show_item(request, item_id):
                 else:   # 以其他未知方式提交表单
                     return HttpResponse(status=403)
             elif not user_type:     # 如果未登录，或因其他原因返回none
-                pass
-            elif user_type == 'buyer':
-                pass
+                return redirect(reverse('account:Login'))
+            elif user_type == 'seller':
+                return HttpResponse(status=403)
             else:   # 如果出现其他未知原因
                 return HttpResponse(status=403)
 
@@ -101,9 +103,9 @@ def create_item(request):
                 # 商品介绍为html文本
                 intro = request.POST.get('introduction')
                 # 判断有关文件夹是否存在，如果没有，则创建
-                if not os.path.exists('static/items/'+str(item.id)+'/'+str(item.version)+'/'):
-                    os.makedirs('static/items/'+str(item.id)+'/'+str(item.version)+'/')
-                with open('static/items/'+str(item.id)+'/'+str(item.version)+'/introduction.intro', 'w') as item_introduction_file:
+                if not os.path.exists('static/items/'+str(item.item_id)+'/'+str(item.version)+'/'):
+                    os.makedirs('static/items/'+str(item.item_id)+'/'+str(item.version)+'/')
+                with open('static/items/'+str(item.item_id)+'/'+str(item.version)+'/introduction.intro', 'w') as item_introduction_file:
                     item_introduction_file.write(intro)
                 return redirect(reverse('shop:ShowItem', args=[item.id]))   # 创建成功，重定向到商品页面
             return render(request, 'createitem.html', {'form': CreateItemForm(form)})   # 注册失败，重新返回本页面
@@ -217,7 +219,7 @@ def visit_shop(request, shop_id):
         item_list = None
         if shop:
             item_list = ActiveItem.objects.filter(item__shop=shop)
-        return render(request, 'shop.html', {'shop_model': shop, 'item_list': item_list})
+        return render(request, 'shop.html', {'status_bar': get_status_bar(request), 'shop_model': shop, 'item_list': item_list})
 
 
 # 获取富文本编辑器？？？？
@@ -227,22 +229,51 @@ def visit_shop(request, shop_id):
 # 创建订单
 @login_required()
 def make_order(request):
-    if request.method == 'POST':
-        buyer = UserBuyer.objects.filter(user=request.user)
+    buyer = UserBuyer.objects.filter(user=request.user)
+    if request.method == 'GET':
         if buyer:
             buyer = buyer[0]
-            order_cart_item_list = Cart.objects.filter(user=buyer, collected=False).exclude(item__inventory=0).exclude(item__active=False)
+            # 获取cart中所有的item，除去收集的，没有货的，和不活动的item
+            order_cart_item_list = Cart.objects.filter(user=buyer, collected=False).exclude(item__inventory=0).exclude(
+                item__active=False)
             if order_cart_item_list:
-                order_item_list_as_json = []    # 存储json化的订单信息
-                order_amount = decimal.Decimal(0)
-                shops = []      # 保存涉及的店铺
+                orders = {}     # 临时存储订单
                 for cart_item in order_cart_item_list:
-                    order_amount += cart_item.item.price
-                    order_item_list_as_json.append({'item_id': cart_item.item.item_id,           # 商品id
-                                                    'item_name': cart_item.item.item_name,  # 商品名
-                                                    'price': str(cart_item.item.price),          # 销售时的商品价格
-                                                    'version': cart_item.item.version,
-                                                    'quantity': cart_item.quantity})     # 商品版本
+                    if cart_item.item.shop.id not in orders.keys():     # 如果没有为该店铺建立订单
+                        orders[cart_item.item.shop.id] = Order(buyer=buyer, shop=cart_item.item.shop)
+                        orders[cart_item.item.shop.id].details = []
+                    orders[cart_item.item.shop.id].total_amount += cart_item.item.price
+                    orders[cart_item.item.shop.id].details.append({'item_id': cart_item.item.item_id,  # 商品id
+                                                                   'item_name': cart_item.item.item_name,  # 商品名
+                                                                   'price': str(cart_item.item.price),  # 销售时的商品价格
+                                                                   'version': cart_item.item.version,
+                                                                   'quantity': cart_item.quantity})  # 商品版本
+                return render(request, 'make_order.html', {'status_bar': get_status_bar(request),'orders': orders})
+            else:
+                return render(request, 'message.html', {'message_title': '没有商品',
+                                                        'message': '您的购物车为空，无法创建订单',
+                                                        'status_bar': get_status_bar(request)})
+    if request.method == 'POST':
+        if buyer:
+            buyer = buyer[0]
+            # 获取cart中所有的item，除去收集的，没有货的，和不活动的item
+            order_cart_item_list = Cart.objects.filter(user=buyer, collected=False).exclude(item__inventory=0).exclude(item__active=False)
+            if order_cart_item_list:    # 如果存在
+                # order_item_list_as_json = []    # 存储json化的订单信息
+                # order_amount = decimal.Decimal(0)
+                # shops = []      # 保存涉及的店铺
+                orders = {}
+                orders_details = {}
+                for cart_item in order_cart_item_list:
+                    if cart_item.item.shop.id not in orders.keys():
+                        orders[cart_item.item.shop.id] = Order(buyer=buyer, shop=cart_item.item.shop)
+                        orders_details[cart_item.item.shop.id] = []
+                    orders[cart_item.item.shop.id].total_amount += cart_item.item.price
+                    orders_details[cart_item.item.shop.id].append({'item_id': cart_item.item.item_id,           # 商品id
+                                                                    'item_name': cart_item.item.item_name,  # 商品名
+                                                                    'price': str(cart_item.item.price),          # 销售时的商品价格
+                                                                    'version': cart_item.item.version,
+                                                                    'quantity': cart_item.quantity})     # 商品版本
                     # 库存信息处理
                     cart_item.item.inventory -= 1
                     cart_item.item.sales_volume += 1
@@ -252,16 +283,27 @@ def make_order(request):
                     cart_item.item.shop.sales_volume += 1
                     cart_item.item.shop.sales_amount += cart_item.item.price
                     cart_item.item.shop.save()
+                # 将订单们写入数据库
+                orders_key = orders.keys()
+                for key in orders_key:
+                    orders[key].details = json.dumps(orders_details[key])
+                    orders[key].save()
 
-                    if not shops.count(cart_item.item.shop):
-                        shops.append(cart_item.item.shop)
-                # 写入数据库
-                order = Order(buyer=buyer, total_amount=order_amount, details=json.dumps(order_item_list_as_json))
-                order.save()
-                for s in shops:
-                    OrderShopList(order=order, shop=s).save()
+
+                # # 写入数据库
+                # order = Order(buyer=buyer, total_amount=order_amount, details=json.dumps(order_item_list_as_json))
+                # order.save()
+                # for s in shops:
+                #     OrderShopList(order=order, shop=s).save()
                 order_cart_item_list.delete()
-                return redirect(reverse('shop:PayPage', args=[order.id]))
+                if len(orders) == 1:
+                    for key in orders.keys():
+                        order_id = orders[key].id
+                    return redirect(reverse('shop:PayPage', args=[order_id]))
+                elif len(orders) > 1:
+                    return redirect(reverse('account:MyOrders'))
+                else:
+                    return HttpResponse(status=503)
             else:
                 return render(request, 'message.html', {'message_title': '没有商品',
                                                         'message': '您的购物车为空，无法创建订单',
@@ -395,9 +437,10 @@ def history_item(request, item_id, version):
     if request.method == 'GET':
         item = Item.objects.filter(item_id=item_id, version=version)
         if item:
-            if os.path.exists('static/items/' + str(item.id) + '/' + str(
+            item = item[0]
+            if os.path.exists('static/items/' + str(item.item_id) + '/' + str(
                     item.version) + '/introduction.intro'):
-                with open('static/items/' + str(item.id) + '/' + str(
+                with open('static/items/' + str(item.item_id) + '/' + str(
                         item.version) + '/introduction.intro', 'r') as item_intro_file:
                     introduction = item_intro_file.read()
             else:
@@ -423,10 +466,76 @@ def order_details(request, order_id):
 # order 操作
 @login_required()
 def order_operation(request, order_id, option):
-    user, user_type = get_user_type(request.user)
-    if user_type == 'buyer':
-        pass
-    elif user_type == 'seller':
-        pass
+    # status定义和option定义分别见model.Order和my_order.html
+    if request.method == 'GET':
+        order = Order.objects.filter(id=order_id)
+        if order:
+            order = order[0]
+            user, user_type = get_user_type(request.user)
+            try:
+                option = int(option)
+            except ValueError:
+                return HttpResponse(404)
+            if user_type == 'buyer':
+                if order.buyer == user:
+                    if order.status == 0 and option == 1:   # 创建订单后取消付款
+                        order.last_status = order.status
+                        order.status = 5
+                        order.save()
+                        return redirect(reverse('account:MyOrders'))
+                    elif option == 2 and (order.status == 1 or order.status == 2 or order.status == 3):     # 付款后申请退款
+                        order.last_status = order.status
+                        order.status = 4
+                        order.save()
+                        return redirect(reverse('account:MyOrders'))
+                    elif order.status == 4 and option == 3:     # 申请退款时取消申请退款
+                        order.status = order.last_status
+                        order.last_status = 4
+                        order.save()
+                        return redirect(reverse('account:MyOrders'))
+                    elif order.status == 2 and option == 5:     # 发货后确认收货
+                        order.last_status = order.status
+                        order.status = 3
+                        order.finished = True
+                        order.save()
+                        order.shop.owner.balance += order.total_amount
+                        order.shop.owner.save()
+                        return redirect(reverse('account:MyOrders'))
+                # 如果都不行
+                return HttpResponse(status=403)
+            elif user_type == 'seller':
+                if order.shop.owner == user:
+                    if order.status == 1 and option == 6:
+                        order.last_status = order.status
+                        order.status = 2
+                        order.save()
+                        return redirect(reverse('account:MyOrders'))
+                    elif order.status == 4 and option == 7:
+                        if order.last_status == 1:
+                            order.last_status = order.status
+                            order.status = 5
+                            order.save()
+                            return redirect(reverse('account:MyOrders'))
+                        else:
+                            order.last_status = order.status
+                            order.status = 6
+                            order.save()
+                            return redirect(reverse('account:MyOrders'))
+                    elif order.status == 4 and option == 8:
+                        order.status == order.last_status
+                        order.last_status == 4
+                        order.save()
+                        return redirect(reverse('account:MyOrders'))
+                    elif order.status == 6 and option == 9:
+                        order.last_status = order.status
+                        order.status = 5
+                        order.save()
+                        if order.finished:
+                            order.shop.owner.balance += order.total_amount
+                            order.shop.owner.save()
+                        return redirect(reverse('account:MyOrders'))
+                return HttpResponse(status=403)
+            else:
+                return HttpResponse(status=403)
     else:
-        return HttpResponse(status=403)
+        return HttpResponse(status=404)
